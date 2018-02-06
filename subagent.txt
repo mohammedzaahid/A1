@@ -1,0 +1,45 @@
+
+#!/usr/bin/perl
+
+use NetSNMP::agent (':all');
+use NetSNMP::ASN;
+use NetSNMP::OID;
+$| = 1; 
+sub hello_handler{
+  my ($handler, $registration_info, $request_info, $requests) = @_;
+  my $request;
+  my $string_value = "requested OID is out of range";
+  for($request = $requests; $request; $request = $request->next()) {
+    my $oid = $request->getOID();
+    print $oid,"\n";
+    if ($request_info->getMode() == MODE_GET){
+         if ($oid == new NetSNMP::OID("1.3.6.1.4.1.4171.40.1")) {
+              $request->setValue(ASN_COUNTER,time);}
+         if ($oid > new NetSNMP::OID("1.3.6.1.4.1.4171.40.1")) {
+my $t = time;
+my @c = split /[.]/, $oid ;
+my $last_element = $c[-1]-1 ;
+@counters = `cat /tmp/A1/counters.conf`;
+for(my $i=0;$i<=$#counters;$i++){
+my ($k,$v) = split /[,]/,$counters[$i];
+my $ans = $c[$i];
+if($last_element == $k){
+my $d = $t*$v ;
+$max = 2**32;
+if ($d >= $max){
+$st = 0x00000000FFFFFFFF;
+my $final = $d & $st ;
+$request->setValue(ASN_COUNTER,$final);}
+else {
+my $final = $d;
+$request->setValue(ASN_COUNTER,$final);}
+if (!$d){
+my $counter_string = "Requested OID is out of range. ";
+$request->setValue(ASN_OCTET_STR,$counter_string);}}
+}
+}
+}}}
+
+my $agent = new NetSNMP::agent();
+$agent->register("test_agent", "1.3.6.1.4.1.4171.40",
+                 \&hello_handler);
